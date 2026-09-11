@@ -1,0 +1,17 @@
+/home/kenneth/Media/GitHub/New Project (1)/.godot/mono/temp/bin/Debug/New Project (1).deps.json
+/home/kenneth/Media/GitHub/New Project (1)/.godot/mono/temp/bin/Debug/New Project (1).runtimeconfig.json
+/home/kenneth/Media/GitHub/New Project (1)/.godot/mono/temp/bin/Debug/New Project (1).dll
+/home/kenneth/Media/GitHub/New Project (1)/.godot/mono/temp/bin/Debug/New Project (1).pdb
+/home/kenneth/Media/GitHub/New Project (1)/.godot/mono/temp/bin/Debug/GodotSharp.dll
+/home/kenneth/Media/GitHub/New Project (1)/.godot/mono/temp/bin/Debug/GodotSharpEditor.dll
+/home/kenneth/Media/GitHub/New Project (1)/.godot/mono/temp/obj/Debug/New Project (1).csproj.AssemblyReference.cache
+/home/kenneth/Media/GitHub/New Project (1)/.godot/mono/temp/obj/Debug/New Project (1).GeneratedMSBuildEditorConfig.editorconfig
+/home/kenneth/Media/GitHub/New Project (1)/.godot/mono/temp/obj/Debug/New Project (1).AssemblyInfoInputs.cache
+/home/kenneth/Media/GitHub/New Project (1)/.godot/mono/temp/obj/Debug/New Project (1).AssemblyInfo.cs
+/home/kenneth/Media/GitHub/New Project (1)/.godot/mono/temp/obj/Debug/New Project (1).csproj.CoreCompileInputs.cache
+/home/kenneth/Media/GitHub/New Project (1)/.godot/mono/temp/obj/Debug/New Proj.B8230DCE.Up2Date
+/home/kenneth/Media/GitHub/New Project (1)/.godot/mono/temp/obj/Debug/New Project (1).dll
+/home/kenneth/Media/GitHub/New Project (1)/.godot/mono/temp/obj/Debug/refint/New Project (1).dll
+/home/kenneth/Media/GitHub/New Project (1)/.godot/mono/temp/obj/Debug/New Project (1).pdb
+/home/kenneth/Media/GitHub/New Project (1)/.godot/mono/temp/obj/Debug/New Project (1).genruntimeconfig.cache
+/home/kenneth/Media/GitHub/New Project (1)/.godot/mono/temp/obj/Debug/ref/New Project (1).dll

@@ -1,0 +1,14 @@
+{
+  "version": 2,
+  "dgSpecHash": "BVa+f8ig3EU=",
+  "success": true,
+  "projectFilePath": "/home/kenneth/Media/GitHub/New Project (1)/New Project (1).csproj",
+  "expectedPackageFiles": [
+    "/home/kenneth/.nuget/packages/godot.sourcegenerators/4.7.2/godot.sourcegenerators.4.7.2.nupkg.sha512",
+    "/home/kenneth/.nuget/packages/godotsharp/4.7.2/godotsharp.4.7.2.nupkg.sha512",
+    "/home/kenneth/.nuget/packages/godotsharpeditor/4.7.2/godotsharpeditor.4.7.2.nupkg.sha512",
+    "/home/kenneth/.nuget/packages/microsoft.netcore.app.ref/8.0.30/microsoft.netcore.app.ref.8.0.30.nupkg.sha512",
+    "/home/kenneth/.nuget/packages/microsoft.aspnetcore.app.ref/8.0.30/microsoft.aspnetcore.app.ref.8.0.30.nupkg.sha512"
+  ],
+  "logs": []
+}

@@ -1,0 +1,10 @@
+res://Tiles/Platformer.tres
+res://Levels/test.tscn
+res://Player/plyr_scene.tscn
+res://player.cs
+res://playercamera.cs
+res://camerabounds.cs
+res://CameraRoom2D.cs
+res://PlayerCamera2D.cs
+res://PlayerController.cs
+res://README.md

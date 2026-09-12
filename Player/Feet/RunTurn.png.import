@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://2m15ctd4rrs5"
-path="res://.godot/imported/Crouch.png-f0a90153d29c75df473a355b9e781967.ctex"
+uid="uid://c3uyij3luagxe"
+path="res://.godot/imported/RunTurn.png-0b9cdb26bb6db455e4006dbdf8dc45bb.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Player/Assets/Crouch.png"
-dest_files=["res://.godot/imported/Crouch.png-f0a90153d29c75df473a355b9e781967.ctex"]
+source_file="res://Player/Feet/RunTurn.png"
+dest_files=["res://.godot/imported/RunTurn.png-0b9cdb26bb6db455e4006dbdf8dc45bb.ctex"]
 
 [params]
 

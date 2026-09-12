@@ -30,6 +30,7 @@ movie_writer/movie_file="/home/kenneth/Media/GitHub/New Project (1)/testing.ogv"
 [global_group]
 
 player=""
+camera_rooms=""
 
 [input]
 

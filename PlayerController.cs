@@ -23,10 +23,11 @@ public partial class PlayerController : CharacterBody2D
 	[Export] public float WallJumpPushVelocity = 250f;
 	[Export] public float WallJumpVerticalVelocity = -300f;
 	[Export] public float WallSlideGravityScale = 0.3f;
-	[Export] public bool RequireInputTowardWallToHang = true;
+	[Export] public bool RequireInputTowardWallToHang = false;
 
 	[ExportGroup("Node References")]
-	[Export] public NodePath SpritePath = "AnimatedSprite2D";
+	[Export] public NodePath SpritePath = "AnimatedSprite2D";r.
+	[Export] public NodePath FeetSpritePath = "AnimatedSprite2D2";
 
 	[ExportGroup("Animation Clip Names")]
 	[Export] public string AnimIdle = "idle";
@@ -50,14 +51,13 @@ public partial class PlayerController : CharacterBody2D
 	}
 
 	private AnimatedSprite2D _sprite;
+	private AnimatedSprite2D _feetSprite;
 
 	private State _state = State.Idle;
-	private int _facing = 1; // 1 = right, -1 = left
+	private int _facing = 1;
+	private int _preHangFacing = 1;
 	private bool _wasOnFloor = true;
 
-	// Tracks whether we're already mid-locomotion and which tier we're in, so
-	// Jog only plays when switching tiers while moving - not when starting
-	// from a standstill.
 	private bool _hasMoveTierBaseline = false;
 	private bool _lastTierWasWalk = false;
 
@@ -72,6 +72,13 @@ public partial class PlayerController : CharacterBody2D
 		else
 		{
 			_sprite.AnimationFinished += OnAnimationFinished;
+		}
+
+		if (!FeetSpritePath.IsEmpty)
+		{
+			_feetSprite = GetNodeOrNull<AnimatedSprite2D>(FeetSpritePath);
+			if (_feetSprite == null)
+				GD.PushWarning("PlayerController: FeetSpritePath is set but no AnimatedSprite2D found at " + FeetSpritePath);
 		}
 
 		ChangeState(State.Idle);
@@ -91,9 +98,11 @@ public partial class PlayerController : CharacterBody2D
 		bool reversed = hasInput && (int)Mathf.Sign(rawAxis) != _facing;
 
 		bool jumpPressed = Input.IsActionJustPressed("jump");
+		bool walkModifierHeld = Input.IsActionPressed("walk_modifier");
 
 		bool wallSlideActive = !onFloor && onWall && Velocity.Y >= 0f
-			&& (!RequireInputTowardWallToHang || PressingTowardWall(rawAxis));
+			&& (!RequireInputTowardWallToHang || PressingTowardWall(rawAxis))
+			&& !walkModifierHeld;
 
 		ApplyGravity(dt, wallSlideActive);
 
@@ -103,7 +112,16 @@ public partial class PlayerController : CharacterBody2D
 		}
 		else if (!onFloor)
 		{
-			HandleAirborne(rawAxis, hasInput, reversed, justLanded, dt);
+			HandleAirborne(rawAxis, hasInput, reversed, dt);
+		}
+		else if (justLanded)
+		{
+			ChangeState(State.JumpEnd);
+			Velocity = new Vector2(Mathf.MoveToward(Velocity.X, 0f, GroundAcceleration * dt), Velocity.Y);
+		}
+		else if (_state == State.JumpEnd)
+		{
+			Velocity = new Vector2(Mathf.MoveToward(Velocity.X, 0f, GroundAcceleration * dt), Velocity.Y);
 		}
 		else if (jumpPressed)
 		{
@@ -112,7 +130,7 @@ public partial class PlayerController : CharacterBody2D
 		}
 		else
 		{
-			HandleLocomotion(rawAxis, hasInput, reversed, dt);
+			HandleLocomotion(rawAxis, hasInput, dt);
 		}
 
 		UpdateFacing(rawAxis, hasInput);
@@ -120,23 +138,21 @@ public partial class PlayerController : CharacterBody2D
 		_wasOnFloor = onFloor;
 	}
 
-	// ---------------------------------------------------------------
-	// Branch handlers
-	// ---------------------------------------------------------------
-
-	private void HandleLocomotion(float rawAxis, bool hasInput, bool reversed, float dt)
+	private void HandleLocomotion(float rawAxis, bool hasInput, float dt)
 	{
-		// Direction-reversal pivot takes priority (only defined for running).
-		if (_state == State.Run && reversed)
+		bool velocityOpposesInput = hasInput && Mathf.Abs(Velocity.X) > 1f
+			&& Mathf.Sign(rawAxis) != Mathf.Sign(Velocity.X);
+
+		if (_state != State.RunTurn && !_lastTierWasWalk && velocityOpposesInput)
 		{
 			ChangeState(State.RunTurn);
-			Velocity = new Vector2(Mathf.MoveToward(Velocity.X, 0f, GroundAcceleration * dt), Velocity.Y);
+			Velocity = new Vector2(0f, Velocity.Y);
 			return;
 		}
+
 		if (_state == State.RunTurn)
 		{
-			// Transient clip plays itself out; OnAnimationFinished re-evaluates locomotion after.
-			Velocity = new Vector2(Mathf.MoveToward(Velocity.X, 0f, GroundAcceleration * dt), Velocity.Y);
+			Velocity = new Vector2(0f, Velocity.Y);
 			return;
 		}
 
@@ -152,9 +168,6 @@ public partial class PlayerController : CharacterBody2D
 
 		if (_state == State.Jog)
 		{
-			// Transitional clip plays itself out; OnAnimationFinished settles into Walk/Run.
-			// Keep easing velocity toward whichever tier we're heading into so movement
-			// doesn't stall mid-transition.
 			float coastSpeed = walkHeld ? WalkSpeed : RunSpeed;
 			float coastTarget = coastSpeed * Mathf.Sign(rawAxis);
 			Velocity = new Vector2(Mathf.MoveToward(Velocity.X, coastTarget, GroundAcceleration * dt), Velocity.Y);
@@ -163,16 +176,12 @@ public partial class PlayerController : CharacterBody2D
 
 		if (!_hasMoveTierBaseline)
 		{
-			// Just started moving from a standstill: jump straight into the matching
-			// tier, no jog transition needed.
 			_hasMoveTierBaseline = true;
 			_lastTierWasWalk = walkHeld;
 			ChangeState(walkHeld ? State.Walk : State.Run);
 		}
 		else if (walkHeld != _lastTierWasWalk)
 		{
-			// Switching between walking and running while already moving: play the
-			// jog transition; OnAnimationFinished will land us in the new tier.
 			_lastTierWasWalk = walkHeld;
 			ChangeState(State.Jog);
 		}
@@ -186,18 +195,11 @@ public partial class PlayerController : CharacterBody2D
 		Velocity = new Vector2(Mathf.MoveToward(Velocity.X, target, GroundAcceleration * dt), Velocity.Y);
 	}
 
-	private void HandleAirborne(float rawAxis, bool hasInput, bool reversed, bool justLanded, float dt)
+	private void HandleAirborne(float rawAxis, bool hasInput, bool reversed, float dt)
 	{
 		float targetSpeed = hasInput ? RunSpeed * Mathf.Sign(rawAxis) : 0f;
 		Velocity = new Vector2(Mathf.MoveToward(Velocity.X, targetSpeed, AirAcceleration * dt), Velocity.Y);
 
-		if (justLanded)
-		{
-			ChangeState(State.JumpEnd);
-			return;
-		}
-
-		// Let one-shot clips play themselves out; OnAnimationFinished advances the state.
 		if (_state == State.JumpStart || _state == State.JumpTurn || _state == State.JumpEnd)
 			return;
 
@@ -216,11 +218,14 @@ public partial class PlayerController : CharacterBody2D
 		ChangeState(State.WallHang);
 		Velocity = new Vector2(0f, Mathf.Min(Velocity.Y, MaxFallSpeed * WallSlideGravityScale));
 
+		float wallNormalX = GetWallNormal().X;
+		SetFacing(wallNormalX > 0 ? -1 : 1);
+
 		if (jumpPressed)
 		{
-			float pushDir = GetWallNormal().X; // points away from the wall surface
+			float pushDir = GetWallNormal().X;
 			Velocity = new Vector2(pushDir * WallJumpPushVelocity, WallJumpVerticalVelocity);
-			_facing = pushDir >= 0 ? 1 : -1;
+			SetFacing(_preHangFacing);
 			ChangeState(State.JumpStart);
 		}
 	}
@@ -251,19 +256,26 @@ public partial class PlayerController : CharacterBody2D
 
 	private void UpdateFacing(float rawAxis, bool hasInput)
 	{
-		if (!hasInput) return;
-		int newFacing = rawAxis > 0 ? 1 : -1;
-		if (newFacing == _facing) return;
+		if (_state == State.WallHang) return;
 
+		if (!hasInput) return;
+		SetFacing(rawAxis > 0 ? 1 : -1);
+	}
+
+	private void SetFacing(int newFacing)
+	{
+		if (newFacing == _facing) return;
 		_facing = newFacing;
-		if (_sprite != null)
-			_sprite.FlipH = _facing < 0;
+
+		bool flip = _facing < 0;
+		if (_sprite != null) _sprite.FlipH = flip;
+		if (_feetSprite != null) _feetSprite.FlipH = flip;
 	}
 
 	private bool PressingTowardWall(float rawAxis)
 	{
 		if (Mathf.Abs(rawAxis) <= InputDeadzone) return false;
-		float wallNormalX = GetWallNormal().X; // points away from the wall
+		float wallNormalX = GetWallNormal().X;
 		return Mathf.Sign(rawAxis) == -Mathf.Sign(wallNormalX);
 	}
 
@@ -287,6 +299,10 @@ public partial class PlayerController : CharacterBody2D
 	private void ChangeState(State newState)
 	{
 		if (_state == newState) return;
+
+		if (newState == State.WallHang)
+			_preHangFacing = _facing;
+
 		_state = newState;
 
 		switch (newState)
@@ -308,12 +324,18 @@ public partial class PlayerController : CharacterBody2D
 
 	private void PlayAnim(string clipName)
 	{
-		if (_sprite == null || _sprite.SpriteFrames == null) return;
+		PlayOnSprite(_sprite, clipName);
+		PlayOnSprite(_feetSprite, clipName);
+	}
 
-		if (_sprite.SpriteFrames.HasAnimation(clipName))
-			_sprite.Play(clipName);
+	private void PlayOnSprite(AnimatedSprite2D sprite, string clipName)
+	{
+		if (sprite == null || sprite.SpriteFrames == null) return;
+
+		if (sprite.SpriteFrames.HasAnimation(clipName))
+			sprite.Play(clipName);
 		else
-			GD.PushWarning($"PlayerController: animation clip '{clipName}' not found in SpriteFrames.");
+			GD.PushWarning($"PlayerController: animation clip '{clipName}' not found in '{sprite.Name}' SpriteFrames.");
 	}
 
 	private void OnAnimationFinished()

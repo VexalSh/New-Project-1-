@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b2w38jk5coowj"
-path="res://.godot/imported/CrouchSneak.png-2885284c4266ecdfe214a63ab1c95074.ctex"
+uid="uid://uluje23j8xhb"
+path="res://.godot/imported/Jump.png-612b4be4fecac6d50d6b0d02cd688aef.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Player/Assets/CrouchSneak.png"
-dest_files=["res://.godot/imported/CrouchSneak.png-2885284c4266ecdfe214a63ab1c95074.ctex"]
+source_file="res://Player/Feet/Jump.png"
+dest_files=["res://.godot/imported/Jump.png-612b4be4fecac6d50d6b0d02cd688aef.ctex"]
 
 [params]
 

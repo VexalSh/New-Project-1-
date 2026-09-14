@@ -26,7 +26,7 @@ public partial class PlayerController : CharacterBody2D
 	[Export] public bool RequireInputTowardWallToHang = false;
 
 	[ExportGroup("Node References")]
-	[Export] public NodePath SpritePath = "AnimatedSprite2D";r.
+	[Export] public NodePath SpritePath = "AnimatedSprite2D";
 	[Export] public NodePath FeetSpritePath = "AnimatedSprite2D2";
 
 	[ExportGroup("Animation Clip Names")]

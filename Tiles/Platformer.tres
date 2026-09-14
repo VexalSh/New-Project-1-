@@ -3,7 +3,7 @@
 [ext_resource type="Texture2D" uid="uid://bhquiixakhvqr" path="res://Tiles/PlatformerTilesetTemplate_Tileset.png" id="1_whu6b"]
 [ext_resource type="Texture2D" uid="uid://dp8t4sc66r6hi" path="res://Tiles/PlatformerTilesetTemplate_Tileset_Blue.png" id="2_q57m8"]
 [ext_resource type="Texture2D" uid="uid://dljri6ocwq7ae" path="res://Tiles/PlatformerTilesetTemplate_Tileset_Brown.png" id="3_0k813"]
-[ext_resource type="Texture2D" uid="uid://ckcdxvesu183w" path="res://Tiles/PlatformerTilesetTemplate_Tileset_Dark.png" id="4_aeey8"]
+[ext_resource type="Texture2D" uid="uid://ct4x7pg0y2kov" path="res://Tiles/PlatformerTilesetTemplate_Tileset_Dark.png" id="4_aeey8"]
 [ext_resource type="Texture2D" uid="uid://cl6763h2x8hss" path="res://Tiles/PlatformerTilesetTemplate_Tileset_Green.png" id="5_4uxmr"]
 [ext_resource type="Texture2D" uid="uid://b461y35tp23d3" path="res://Tiles/PlatformerTilesetTemplate_Tileset_Orange.png" id="6_twd0b"]
 [ext_resource type="Texture2D" uid="uid://bun68kfmnjbmt" path="res://Tiles/PlatformerTilesetTemplate_Tileset_Pink.png" id="7_xanf8"]
@@ -1075,6 +1075,10 @@ texture = ExtResource("4_aeey8")
 7:8/0 = 0
 7:8/0/physics_layer_0/polygon_0/points = PackedVector2Array(8, -8, 8, 8, -8, 8, -8, -8, 8, -8)
 8:8/0 = 0
+9:8/0 = 0
+9:8/0/physics_layer_1/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+10:8/0 = 0
+10:8/0/physics_layer_1/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_p6qgb"]
 resource_name = "Green"
@@ -2453,6 +2457,8 @@ texture = ExtResource("10_ygj6q")
 [resource]
 physics_layer_0/collision_layer = 1
 physics_layer_0/physics_material = SubResource("PhysicsMaterial_18o28")
+physics_layer_1/collision_layer = 2
+physics_layer_1/collision_mask = 2
 sources/0 = SubResource("TileSetAtlasSource_xhb4t")
 sources/1 = SubResource("TileSetAtlasSource_yu2u4")
 sources/2 = SubResource("TileSetAtlasSource_2emwc")

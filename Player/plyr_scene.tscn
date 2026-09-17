@@ -642,6 +642,7 @@ size = Vector2(8, 11.9)
 
 [node name="CharacterBody2D" type="CharacterBody2D" unique_id=1944513045]
 script = ExtResource("1_g676k")
+FeetSpritePath = NodePath("AnimatedSprite2D2")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1658774960]
 texture_filter = 1

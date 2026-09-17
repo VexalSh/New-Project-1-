@@ -1,8 +1,8 @@
-/// Generated initially using Claude
+// Generated initially using Claude
 
 using Godot;
 
-public partial class PlayerController : CharacterBody2D
+public partial class PlayerController : CharacterBody2D, IKnockbackable
 {
 	[ExportGroup("Movement Speeds")]
 	[Export] public float WalkSpeed = 30f;
@@ -25,9 +25,32 @@ public partial class PlayerController : CharacterBody2D
 	[Export] public float WallSlideGravityScale = 0.3f;
 	[Export] public bool RequireInputTowardWallToHang = false;
 
+	[ExportGroup("Health")]
+	[Export] public float MaxHealth = 100f;
+	[Export] public float RegenRate = 5f;
+	[Export] public float RegenDelay = 2f;
+	[Export] public float InvulnerabilityDuration = 1f;
+	[Export] public float HurtFlickerInterval = 0.08f;
+
+	[ExportGroup("Hazard Layers")]
+	[Export(PropertyHint.Layers2DPhysics)] public uint HazardLayerMask = 1u << 4;
+	[Export(PropertyHint.Layers2DPhysics)] public uint HazardHeavyLayerMask = 1u << 5;
+	[Export(PropertyHint.Layers2DPhysics)] public uint HazardInstantLayerMask = 1u << 6;
+
+	[Export] public float HazardDamage = 10f;
+	[Export] public Vector2 HazardKnockbackForce = Vector2.Zero;
+	[Export] public float HazardKnockbackDuration = 0.25f;
+
+	[ExportGroup("Death")]
+	[Export] public PackedScene DeathScene;
+
+	[ExportGroup("Air Jump Refill")]
+	[Export] public float DoubleJumpVelocity = -280f;
+
 	[ExportGroup("Node References")]
 	[Export] public NodePath SpritePath = "AnimatedSprite2D";
-	[Export] public NodePath FeetSpritePath = "AnimatedSprite2D2";
+	[Export] public NodePath FeetSpritePath = "";
+	[Export] public NodePath CollisionShapePath = "CollisionShape2D";
 
 	[ExportGroup("Animation Clip Names")]
 	[Export] public string AnimIdle = "idle";
@@ -42,6 +65,8 @@ public partial class PlayerController : CharacterBody2D
 	[Export] public string AnimHang = "hang";
 
 	[Signal] public delegate void StateChangedEventHandler(string newState);
+	[Signal] public delegate void HealthChangedEventHandler(float current, float max);
+	[Signal] public delegate void DiedEventHandler();
 
 	private enum State
 	{
@@ -52,6 +77,7 @@ public partial class PlayerController : CharacterBody2D
 
 	private AnimatedSprite2D _sprite;
 	private AnimatedSprite2D _feetSprite;
+	private CollisionShape2D _collisionShape;
 
 	private State _state = State.Idle;
 	private int _facing = 1;
@@ -61,8 +87,22 @@ public partial class PlayerController : CharacterBody2D
 	private bool _hasMoveTierBaseline = false;
 	private bool _lastTierWasWalk = false;
 
+	private float _knockbackTimer = 0f;
+
+	public float CurrentHealth { get; private set; }
+	private bool _isInvulnerable = false;
+	private bool _isDead = false;
+	private float _invulnTimer = 0f;
+	private float _flickerTimer = 0f;
+	private float _regenDelayTimer = 0f;
+
+	private bool _airJumpAvailable = false;
+
 	public override void _Ready()
 	{
+		AddToGroup("player");
+		CurrentHealth = MaxHealth;
+
 		_sprite = GetNodeOrNull<AnimatedSprite2D>(SpritePath);
 
 		if (_sprite == null)
@@ -81,12 +121,33 @@ public partial class PlayerController : CharacterBody2D
 				GD.PushWarning("PlayerController: FeetSpritePath is set but no AnimatedSprite2D found at " + FeetSpritePath);
 		}
 
+		_collisionShape = GetNodeOrNull<CollisionShape2D>(CollisionShapePath);
+		if (_collisionShape == null)
+			GD.PushWarning("PlayerController: no CollisionShape2D found at " + CollisionShapePath + " - hazard overlap detection will be disabled.");
+
 		ChangeState(State.Idle);
+	}
+
+	public void ApplyKnockback(Vector2 impulse, float duration)
+	{
+		Velocity = impulse;
+		_knockbackTimer = Mathf.Max(duration, 0f);
 	}
 
 	public override void _PhysicsProcess(double delta)
 	{
 		float dt = (float)delta;
+
+		if (_knockbackTimer > 0f)
+		{
+			_knockbackTimer -= dt;
+			bool floorNow = IsOnFloor();
+			ApplyGravity(dt, false);
+			MoveAndSlide();
+			CheckHazardOverlap();
+			_wasOnFloor = floorNow;
+			return;
+		}
 
 		bool onFloor = IsOnFloor();
 		bool onWall = IsOnWall();
@@ -105,6 +166,7 @@ public partial class PlayerController : CharacterBody2D
 			&& !walkModifierHeld;
 
 		ApplyGravity(dt, wallSlideActive);
+		UpdateHealth(dt);
 
 		if (wallSlideActive)
 		{
@@ -112,7 +174,7 @@ public partial class PlayerController : CharacterBody2D
 		}
 		else if (!onFloor)
 		{
-			HandleAirborne(rawAxis, hasInput, reversed, dt);
+			HandleAirborne(rawAxis, hasInput, reversed, jumpPressed, dt);
 		}
 		else if (justLanded)
 		{
@@ -135,6 +197,7 @@ public partial class PlayerController : CharacterBody2D
 
 		UpdateFacing(rawAxis, hasInput);
 		MoveAndSlide();
+		CheckHazardOverlap();
 		_wasOnFloor = onFloor;
 	}
 
@@ -195,8 +258,16 @@ public partial class PlayerController : CharacterBody2D
 		Velocity = new Vector2(Mathf.MoveToward(Velocity.X, target, GroundAcceleration * dt), Velocity.Y);
 	}
 
-	private void HandleAirborne(float rawAxis, bool hasInput, bool reversed, float dt)
+	private void HandleAirborne(float rawAxis, bool hasInput, bool reversed, bool jumpPressed, float dt)
 	{
+		if (jumpPressed && _airJumpAvailable && _state != State.JumpTurn)
+		{
+			_airJumpAvailable = false;
+			Velocity = new Vector2(Velocity.X, DoubleJumpVelocity);
+			ChangeState(State.JumpStart);
+			return;
+		}
+
 		float targetSpeed = hasInput ? RunSpeed * Mathf.Sign(rawAxis) : 0f;
 		Velocity = new Vector2(Mathf.MoveToward(Velocity.X, targetSpeed, AirAcceleration * dt), Velocity.Y);
 
@@ -252,6 +323,152 @@ public partial class PlayerController : CharacterBody2D
 		Vector2 v = Velocity;
 		v.Y = Mathf.Min(v.Y + g * dt, MaxFallSpeed);
 		Velocity = v;
+	}
+
+	private void UpdateHealth(float dt)
+	{
+		if (_invulnTimer > 0f)
+		{
+			_invulnTimer -= dt;
+			if (_invulnTimer <= 0f)
+			{
+				_isInvulnerable = false;
+				SetSpritesVisible(true);
+			}
+			else
+			{
+				_flickerTimer -= dt;
+				if (_flickerTimer <= 0f)
+				{
+					_flickerTimer = HurtFlickerInterval;
+					SetSpritesVisible(!(_sprite?.Visible ?? true));
+				}
+			}
+		}
+
+		if (_regenDelayTimer > 0f)
+		{
+			_regenDelayTimer -= dt;
+		}
+		else if (CurrentHealth < MaxHealth)
+		{
+			CurrentHealth = Mathf.Min(MaxHealth, CurrentHealth + RegenRate * dt);
+			EmitSignal(SignalName.HealthChanged, CurrentHealth, MaxHealth);
+		}
+	}
+
+	private void SetSpritesVisible(bool visible)
+	{
+		if (_sprite != null) _sprite.Visible = visible;
+		if (_feetSprite != null) _feetSprite.Visible = visible;
+	}
+
+	public void TakeDamage(float amount)
+	{
+		if (_isDead || _isInvulnerable || amount <= 0f) return;
+
+		CurrentHealth = Mathf.Max(0f, CurrentHealth - amount);
+		_regenDelayTimer = RegenDelay;
+		_isInvulnerable = true;
+		_invulnTimer = InvulnerabilityDuration;
+		_flickerTimer = HurtFlickerInterval;
+
+		EmitSignal(SignalName.HealthChanged, CurrentHealth, MaxHealth);
+
+		if (CurrentHealth <= 0f)
+			Die();
+	}
+
+	public void KillInstantly()
+	{
+		if (_isDead) return;
+
+		CurrentHealth = 0f;
+		EmitSignal(SignalName.HealthChanged, CurrentHealth, MaxHealth);
+		Die();
+	}
+
+	private void Die()
+	{
+		if (_isDead) return;
+		_isDead = true;
+
+		SetSpritesVisible(true);
+		SetPhysicsProcess(false);
+		EmitSignal(SignalName.Died);
+
+		CallDeferred(nameof(GoToDeathScene));
+	}
+
+	private void GoToDeathScene()
+	{
+		if (DeathScene != null)
+			GetTree().ChangeSceneToPacked(DeathScene);
+		else
+			GetTree().ReloadCurrentScene();
+	}
+
+	private void CheckHazardOverlap()
+	{
+		if (_isDead || _collisionShape == null || _collisionShape.Shape == null) return;
+
+		uint combinedMask = HazardLayerMask | HazardHeavyLayerMask | HazardInstantLayerMask;
+		if (combinedMask == 0) return;
+
+		var query = new PhysicsShapeQueryParameters2D
+		{
+			Shape = _collisionShape.Shape,
+			Transform = _collisionShape.GlobalTransform,
+			CollisionMask = combinedMask,
+			CollideWithBodies = true,
+			CollideWithAreas = false,
+			Exclude = new Godot.Collections.Array<Rid> { GetRid() }
+		};
+
+		var results = GetWorld2D().DirectSpaceState.IntersectShape(query);
+		foreach (Godot.Collections.Dictionary result in results)
+		{
+			Rid bodyRid = result["rid"].AsRid();
+			uint colliderLayer = PhysicsServer2D.BodyGetCollisionLayer(bodyRid);
+
+			if ((colliderLayer & HazardInstantLayerMask) != 0)
+			{
+				KillInstantly();
+				return;
+			}
+
+			if ((colliderLayer & HazardHeavyLayerMask) != 0)
+			{
+				TakeDamage(HazardDamage);
+				ApplyHazardKnockback();
+				continue;
+			}
+
+			if ((colliderLayer & HazardLayerMask) != 0)
+			{
+				TakeDamage(HazardDamage);
+			}
+		}
+	}
+
+	private void ApplyHazardKnockback()
+	{
+		if (HazardKnockbackForce == Vector2.Zero) return;
+
+		float pushX = -_facing * Mathf.Abs(HazardKnockbackForce.X);
+		ApplyKnockback(new Vector2(pushX, HazardKnockbackForce.Y), HazardKnockbackDuration);
+	}
+
+	public void Heal(float amount)
+	{
+		if (amount <= 0f) return;
+		CurrentHealth = Mathf.Min(MaxHealth, CurrentHealth + amount);
+		EmitSignal(SignalName.HealthChanged, CurrentHealth, MaxHealth);
+	}
+
+	public void RefreshAirJump()
+	{
+		_airJumpAvailable = true;
 	}
 
 	private void UpdateFacing(float rawAxis, bool hasInput)

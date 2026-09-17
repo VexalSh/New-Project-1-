@@ -49,6 +49,7 @@ texture = ExtResource("1_whu6b")
 10:0/next_alternative_id = 2
 10:0/0 = 0
 10:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(8, -8, 8, 8, -8, 8, -8, -8, 8, -8)
+10:0/0/physics_layer_1/polygon_0/points = PackedVector2Array(-4, -4, 4, -4, 4, 4, -4, 4)
 11:0/next_alternative_id = 2
 11:0/0 = 0
 11:0/0/physics_layer_0/polygon_0/points = PackedVector2Array(8, -8, 8, 8, -8, 8, -8, -8, 8, -8)
@@ -1076,9 +1077,9 @@ texture = ExtResource("4_aeey8")
 7:8/0/physics_layer_0/polygon_0/points = PackedVector2Array(8, -8, 8, 8, -8, 8, -8, -8, 8, -8)
 8:8/0 = 0
 9:8/0 = 0
-9:8/0/physics_layer_1/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+9:8/0/physics_layer_1/polygon_0/points = PackedVector2Array(-4, -4, 4, -4, 4, 4, -4, 4)
 10:8/0 = 0
-10:8/0/physics_layer_1/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
+10:8/0/physics_layer_2/polygon_0/points = PackedVector2Array(-8, -8, 8, -8, 8, 8, -8, 8)
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_p6qgb"]
 resource_name = "Green"
@@ -2457,8 +2458,10 @@ texture = ExtResource("10_ygj6q")
 [resource]
 physics_layer_0/collision_layer = 1
 physics_layer_0/physics_material = SubResource("PhysicsMaterial_18o28")
-physics_layer_1/collision_layer = 2
-physics_layer_1/collision_mask = 2
+physics_layer_1/collision_layer = 32
+physics_layer_1/collision_mask = 32
+physics_layer_2/collision_layer = 64
+physics_layer_2/collision_mask = 64
 sources/0 = SubResource("TileSetAtlasSource_xhb4t")
 sources/1 = SubResource("TileSetAtlasSource_yu2u4")
 sources/2 = SubResource("TileSetAtlasSource_2emwc")

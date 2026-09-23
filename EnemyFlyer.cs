@@ -1,5 +1,6 @@
 using Godot;
 
+/// <summary>
 /// Hovers in place until the player enters its field of view (within range,
 /// within a facing-cone, and optionally with clear line of sight), then
 /// flies straight at them. Dies when the player stomps it from above.
@@ -13,6 +14,7 @@ using Godot;
 ///     "death" (death non-looping).
 ///   - Relies on the player's CharacterBody2D being in the "player" group
 ///     (PlayerController already adds itself to this automatically).
+/// </summary>
 public partial class EnemyFlyer : CharacterBody2D, IStompable
 {
 	[Export] public float FlySpeed = 60f;
@@ -102,6 +104,8 @@ public partial class EnemyFlyer : CharacterBody2D, IStompable
 		return true;
 	}
 
+	/// <summary>IStompable implementation - the player calls this when it
+	/// lands on this enemy from above.</summary>
 	public bool Stomp(CharacterBody2D player)
 	{
 		if (_dead) return false;
@@ -122,6 +126,8 @@ public partial class EnemyFlyer : CharacterBody2D, IStompable
 
 	private void OnAnimationFinished()
 	{
+		// "stationary"/"flying" loop, so this fires every cycle too - only
+		// act on it once actually dead (playing the non-looping "death" clip).
 		if (_dead) QueueFree();
 	}
 }

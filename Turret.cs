@@ -1,5 +1,6 @@
 using Godot;
 
+/// <summary>
 /// Falls under gravity until it touches a surface, then permanently
 /// attaches to it (stops moving) and orients itself using whichever of the
 /// 5 "looking N" animations best matches the surface's angle - floor,
@@ -26,6 +27,7 @@ using Godot;
 ///     floor, then wall, then ceiling.
 ///   - Set ProjectileScene to a scene using Projectile.cs to enable firing;
 ///     leave it empty for a purely decorative attaching creature.
+/// </summary>
 public partial class Turret : CharacterBody2D
 {
 	[Export] public float Gravity = 900f;
@@ -79,6 +81,9 @@ public partial class Turret : CharacterBody2D
 		// Attached: sit completely still from here on.
 		Velocity = Vector2.Zero;
 
+		// Firing only happens while the player's in the same room - the timer
+		// simply doesn't tick down otherwise, so it doesn't "catch up" with a
+		// surprise shot the instant the player walks back in.
 		if (ProjectileScene != null && RoomActivity.IsPlayerInSameRoom(this, _player))
 		{
 			_fireTimer -= dt;

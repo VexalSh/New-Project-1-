@@ -1,0 +1,97 @@
+[gd_scene format=3 uid="uid://c8kiled8v6qp5"]
+
+[ext_resource type="Texture2D" uid="uid://cd550jxohs84n" path="res://Enemies/Assets/WalkerDeath.png" id="1_k0jbk"]
+[ext_resource type="Texture2D" uid="uid://q0xnusaoy5xx" path="res://Enemies/Assets/WalkerWalking.png" id="2_oogvh"]
+[ext_resource type="Script" uid="uid://cg8a6dcdhdyfh" path="res://EnemyWalker.cs" id="3_oogvh"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_7r3rv"]
+atlas = ExtResource("2_oogvh")
+region = Rect2(0, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_p3t4v"]
+atlas = ExtResource("2_oogvh")
+region = Rect2(16, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_lg7a2"]
+atlas = ExtResource("2_oogvh")
+region = Rect2(32, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5vhqi"]
+atlas = ExtResource("2_oogvh")
+region = Rect2(48, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_x7vl6"]
+atlas = ExtResource("2_oogvh")
+region = Rect2(64, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_31oer"]
+atlas = ExtResource("2_oogvh")
+region = Rect2(80, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2q0ch"]
+atlas = ExtResource("2_oogvh")
+region = Rect2(96, 0, 16, 16)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_3nawi"]
+atlas = ExtResource("2_oogvh")
+region = Rect2(112, 0, 16, 16)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_18o28"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_k0jbk")
+}],
+"loop": 0,
+"name": &"death",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_7r3rv")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_p3t4v")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_lg7a2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5vhqi")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_x7vl6")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_31oer")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2q0ch")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_3nawi")
+}],
+"loop": 1,
+"name": &"walking",
+"speed": 5.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_pd08i"]
+size = Vector2(9, 7)
+
+[node name="Walker" type="CharacterBody2D" unique_id=1398327618]
+script = ExtResource("3_oogvh")
+EdgeRayPath = NodePath("RayCast2D")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1490384447]
+position = Vector2(0, -4)
+sprite_frames = SubResource("SpriteFrames_18o28")
+animation = &"walking"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1127932085]
+position = Vector2(-0.5, -0.5)
+shape = SubResource("RectangleShape2D_pd08i")
+
+[node name="RayCast2D" type="RayCast2D" parent="." unique_id=135607995]
+target_position = Vector2(22, 11)
+collision_mask = 49

@@ -5,6 +5,7 @@
 [ext_resource type="PackedScene" uid="uid://bvdx7ibe083hk" path="res://Player/plyr_scene.tscn" id="2_p4erq"]
 [ext_resource type="Script" uid="uid://dfkakkawgg4bk" path="res://PlayerCamera2D.cs" id="3_p4erq"]
 [ext_resource type="Script" uid="uid://ce05c73yyxb8u" path="res://CameraRoom2D.cs" id="4_f87w0"]
+[ext_resource type="PackedScene" uid="uid://c8kiled8v6qp5" path="res://Enemies/Walker.tscn" id="6_w4v7x"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_qvubh"]
 atlas = ExtResource("1_afen0")
@@ -118,3 +119,7 @@ script = ExtResource("4_f87w0")
 [node name="CollisionShape2D" type="CollisionShape2D" parent="CameraBounds/Area2D6" unique_id=2055505807]
 position = Vector2(-608, -408)
 shape = SubResource("RectangleShape2D_q0ila")
+
+[node name="Walker" parent="." unique_id=1398327618 instance=ExtResource("6_w4v7x")]
+position = Vector2(121, -116)
+collision_layer = 64

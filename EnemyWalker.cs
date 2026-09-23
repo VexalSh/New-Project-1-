@@ -1,19 +1,5 @@
 using Godot;
 
-/// Walks back and forth, turning around when it hits a wall or is about to
-/// walk off a ledge. Dies when the player stomps it from above.
-///
-/// Setup:
-///   - Node type: CharacterBody2D, with a CollisionShape2D for its body.
-///   - Add a RayCast2D child (see EdgeRayPath) positioned near its feet,
-///     pointed straight down with a short TargetPosition (e.g. (0, 20)) -
-///     it's used to detect "no floor ahead" before walking off an edge.
-///     Enable it (Enabled = true).
-///   - Child AnimatedSprite2D with clips "walking" and "death" (death
-///     should be non-looping).
-///   - Needs to be in the player's own CollisionMask for stomping to be
-///     detected at all (stomp relies on real physical collision, unlike
-///     the hazard layers).
 public partial class EnemyWalker : CharacterBody2D, IStompable
 {
 	[Export] public float WalkSpeed = 40f;
@@ -31,7 +17,7 @@ public partial class EnemyWalker : CharacterBody2D, IStompable
 	private AnimatedSprite2D _sprite;
 	private RayCast2D _edgeRay;
 	private Node2D _player;
-	private int _facing = 1; // 1 = right, -1 = left
+	private int _facing = 1;
 	private bool _dead = false;
 	private bool _wasActive = true;
 
@@ -59,17 +45,17 @@ public partial class EnemyWalker : CharacterBody2D, IStompable
 		{
 			_wasActive = active;
 			if (active) PlayAnim(AnimWalking);
-			else _sprite?.Stop(); // freeze on whatever frame rather than "walking" in place
+			else _sprite?.Stop();
 		}
 
 		Vector2 v = Velocity;
 		v.Y = Mathf.Min(v.Y + Gravity * dt, MaxFallSpeed);
-		v.X = active ? WalkSpeed * _facing : 0f; // still falls/stays grounded while inactive, just doesn't patrol
+		v.X = active ? WalkSpeed * _facing : 0f;
 		Velocity = v;
 
 		MoveAndSlide();
 
-		if (!active) return; // paused - skip wall/edge turn checks too
+		if (!active) return;
 
 		bool aboutToFallOffEdge = _edgeRay != null && !_edgeRay.IsColliding();
 		if (IsOnWall() || aboutToFallOffEdge)
@@ -79,9 +65,6 @@ public partial class EnemyWalker : CharacterBody2D, IStompable
 	private void TurnAround()
 	{
 		FaceDirection(-_facing);
-
-		// Nudge slightly away from the wall/edge so the same trigger doesn't
-		// immediately fire again next frame before it's had a chance to move.
 		GlobalPosition += new Vector2(_facing * 2f, 0f);
 	}
 

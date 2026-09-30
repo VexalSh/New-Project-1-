@@ -9,7 +9,7 @@
 [ext_resource type="Texture2D" uid="uid://bcu72ems8ukc1" path="res://Enemies/Assets/Looking90.png" id="7_dgdb2"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_sfwr7"]
-size = Vector2(14, 6)
+size = Vector2(16, 16)
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_ldd4p"]
 animations = [{
@@ -60,7 +60,6 @@ SpawnOffset = 0.0
 ProjectileScene = ExtResource("2_pax35")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=13994184]
-position = Vector2(1, 0)
 shape = SubResource("RectangleShape2D_sfwr7")
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=724201931]

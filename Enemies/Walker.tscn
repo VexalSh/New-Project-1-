@@ -71,7 +71,8 @@ animations = [{
 size = Vector2(9, 7)
 
 [node name="Walker" type="CharacterBody2D" unique_id=1398327618]
-collision_layer = 0
+collision_layer = 64
+collision_mask = 2
 script = ExtResource("3_oogvh")
 EdgeRayPath = NodePath("RayCast2D")
 

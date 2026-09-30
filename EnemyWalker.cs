@@ -1,6 +1,6 @@
 using Godot;
 
-public partial class EnemyWalker : CharacterBody2D, IStompable
+public partial class EnemyWalker : CharacterBody2D
 {
 	[Export] public float WalkSpeed = 40f;
 	[Export] public float Gravity = 900f;
@@ -12,13 +12,11 @@ public partial class EnemyWalker : CharacterBody2D, IStompable
 
 	[ExportGroup("Animation Clip Names")]
 	[Export] public string AnimWalking = "walking";
-	[Export] public string AnimDeath = "death";
 
 	private AnimatedSprite2D _sprite;
 	private RayCast2D _edgeRay;
 	private Node2D _player;
 	private int _facing = 1;
-	private bool _dead = false;
 	private bool _wasActive = true;
 
 	public override void _Ready()
@@ -27,24 +25,19 @@ public partial class EnemyWalker : CharacterBody2D, IStompable
 		_edgeRay = GetNodeOrNull<RayCast2D>(EdgeRayPath);
 		_player = GetTree().GetFirstNodeInGroup("player") as Node2D;
 
-		if (_sprite != null)
-			_sprite.AnimationFinished += OnAnimationFinished;
-
 		FaceDirection(_facing);
-		PlayAnim(AnimWalking);
+		_sprite.Play(AnimWalking);
 	}
 
 	public override void _PhysicsProcess(double delta)
 	{
-		if (_dead) return;
-
 		float dt = (float)delta;
 		bool active = RoomActivity.IsPlayerInSameRoom(this, _player);
 
 		if (active != _wasActive)
 		{
 			_wasActive = active;
-			if (active) PlayAnim(AnimWalking);
+			if (active) _sprite.Play(AnimWalking);
 			else _sprite?.Stop();
 		}
 
@@ -83,28 +76,5 @@ public partial class EnemyWalker : CharacterBody2D, IStompable
 			target.X = Mathf.Abs(target.X) * _facing;
 			_edgeRay.TargetPosition = target;
 		}
-	}
-
-	public bool Stomp(CharacterBody2D player)
-	{
-		if (_dead) return false;
-
-		_dead = true;
-		Velocity = Vector2.Zero;
-		CollisionLayer = 0; // stop blocking movement or being stomped again
-		CollisionMask = 0;
-		PlayAnim(AnimDeath);
-		return true;
-	}
-
-	private void PlayAnim(string clipName)
-	{
-		if (_sprite != null && _sprite.SpriteFrames != null && _sprite.SpriteFrames.HasAnimation(clipName))
-			_sprite.Play(clipName);
-	}
-
-	private void OnAnimationFinished()
-	{
-		if (_dead) QueueFree();
 	}
 }

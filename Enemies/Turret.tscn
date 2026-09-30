@@ -1,0 +1,68 @@
+[gd_scene format=3 uid="uid://lo7fb1tn061g"]
+
+[ext_resource type="Script" uid="uid://dp5ekpttx2nib" path="res://Turret.cs" id="1_4fgdw"]
+[ext_resource type="PackedScene" uid="uid://dkkeop07s35es" path="res://Enemies/Projectile.tscn" id="2_pax35"]
+[ext_resource type="Texture2D" uid="uid://cyqqxyn2ur8kx" path="res://Enemies/Assets/Looking135.png" id="3_re5nj"]
+[ext_resource type="Texture2D" uid="uid://byvfw7j8m2ot7" path="res://Enemies/Assets/Looking180.png" id="4_4wism"]
+[ext_resource type="Texture2D" uid="uid://bast6mru16rjv" path="res://Enemies/Assets/Looking225.png" id="5_woj7f"]
+[ext_resource type="Texture2D" uid="uid://hoa8p615bo20" path="res://Enemies/Assets/Looking270.png" id="6_0ib4q"]
+[ext_resource type="Texture2D" uid="uid://bcu72ems8ukc1" path="res://Enemies/Assets/Looking90.png" id="7_dgdb2"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_sfwr7"]
+size = Vector2(14, 6)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_ldd4p"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_re5nj")
+}],
+"loop": 1,
+"name": &"looking 135",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_4wism")
+}],
+"loop": 1,
+"name": &"looking 180",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("5_woj7f")
+}],
+"loop": 1,
+"name": &"looking 225",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("6_0ib4q")
+}],
+"loop": 1,
+"name": &"looking 270",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("7_dgdb2")
+}],
+"loop": 1,
+"name": &"looking 90",
+"speed": 5.0
+}]
+
+[node name="Turret" type="CharacterBody2D" unique_id=579053712]
+script = ExtResource("1_4fgdw")
+SpawnOffset = 0.0
+ProjectileScene = ExtResource("2_pax35")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=13994184]
+position = Vector2(1, 0)
+shape = SubResource("RectangleShape2D_sfwr7")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=724201931]
+sprite_frames = SubResource("SpriteFrames_ldd4p")
+animation = &"looking 180"

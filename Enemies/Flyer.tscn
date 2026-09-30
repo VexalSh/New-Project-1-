@@ -1,0 +1,32 @@
+[gd_scene format=3 uid="uid://d3r3o5wgxbd5g"]
+
+[ext_resource type="Script" uid="uid://0dlc1occxp03" path="res://EnemyFlyer.cs" id="1_8soeu"]
+[ext_resource type="Texture2D" uid="uid://bct8eywagoyxj" path="res://Enemies/Assets/Flyer.png" id="2_e74f4"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_ldd4p"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_e74f4")
+}],
+"loop": 1,
+"name": &"stationary",
+"speed": 5.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_sfwr7"]
+size = Vector2(9, 5)
+
+[node name="Flyer" type="CharacterBody2D" unique_id=162239339]
+collision_layer = 64
+script = ExtResource("1_8soeu")
+FieldOfViewDegrees = 360.0
+AnimFlying = "stationary"
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=615156138]
+sprite_frames = SubResource("SpriteFrames_ldd4p")
+animation = &"stationary"
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1850122569]
+position = Vector2(1.5, 2.5)
+shape = SubResource("RectangleShape2D_sfwr7")

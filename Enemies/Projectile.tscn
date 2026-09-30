@@ -1,0 +1,41 @@
+[gd_scene format=3 uid="uid://dkkeop07s35es"]
+
+[ext_resource type="Script" uid="uid://jkd6iej1o0c5" path="res://Projectile.cs" id="1_r1ril"]
+[ext_resource type="Texture2D" uid="uid://budw17alsa00y" path="res://Enemies/Assets/Projectile.png" id="2_jvsx0"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ldd4p"]
+size = Vector2(6, 6)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wk7ns"]
+atlas = ExtResource("2_jvsx0")
+region = Rect2(0, 0, 9, 9)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_lu62i"]
+atlas = ExtResource("2_jvsx0")
+region = Rect2(9, 0, 9, 9)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_sfwr7"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wk7ns")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_lu62i")
+}],
+"loop": 1,
+"name": &"default",
+"speed": 2.0
+}]
+
+[node name="Projectile" type="CharacterBody2D" unique_id=1713312935]
+collision_layer = 64
+collision_mask = 2
+script = ExtResource("1_r1ril")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=715325751]
+shape = SubResource("RectangleShape2D_ldd4p")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1903415123]
+sprite_frames = SubResource("SpriteFrames_sfwr7")
+frame_progress = 0.4004498

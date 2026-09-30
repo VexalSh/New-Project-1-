@@ -1,6 +1,5 @@
 [gd_scene format=3 uid="uid://c8kiled8v6qp5"]
 
-[ext_resource type="Texture2D" uid="uid://cd550jxohs84n" path="res://Enemies/Assets/WalkerDeath.png" id="1_k0jbk"]
 [ext_resource type="Texture2D" uid="uid://q0xnusaoy5xx" path="res://Enemies/Assets/WalkerWalking.png" id="2_oogvh"]
 [ext_resource type="Script" uid="uid://cg8a6dcdhdyfh" path="res://EnemyWalker.cs" id="3_oogvh"]
 
@@ -40,14 +39,6 @@ region = Rect2(112, 0, 16, 16)
 animations = [{
 "frames": [{
 "duration": 1.0,
-"texture": ExtResource("1_k0jbk")
-}],
-"loop": 0,
-"name": &"death",
-"speed": 5.0
-}, {
-"frames": [{
-"duration": 1.0,
 "texture": SubResource("AtlasTexture_7r3rv")
 }, {
 "duration": 1.0,
@@ -80,6 +71,7 @@ animations = [{
 size = Vector2(9, 7)
 
 [node name="Walker" type="CharacterBody2D" unique_id=1398327618]
+collision_layer = 0
 script = ExtResource("3_oogvh")
 EdgeRayPath = NodePath("RayCast2D")
 

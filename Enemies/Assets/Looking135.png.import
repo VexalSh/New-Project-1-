@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cd550jxohs84n"
-path="res://.godot/imported/WalkerDeath.png-4dc3f829bede55bd7729c8314f6ae836.ctex"
+uid="uid://cyqqxyn2ur8kx"
+path="res://.godot/imported/Looking135.png-d38858bafda2659121fba32d08b5b99f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Enemies/Assets/WalkerDeath.png"
-dest_files=["res://.godot/imported/WalkerDeath.png-4dc3f829bede55bd7729c8314f6ae836.ctex"]
+source_file="res://Enemies/Assets/Looking135.png"
+dest_files=["res://.godot/imported/Looking135.png-d38858bafda2659121fba32d08b5b99f.ctex"]
 
 [params]
 

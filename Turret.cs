@@ -1,42 +1,22 @@
 using Godot;
 
-/// <summary>
-/// Falls under gravity until it touches a surface, then permanently
-/// attaches to it (stops moving) and orients itself using whichever of the
-/// 5 "looking N" animations best matches the surface's angle - floor,
-/// ceiling, and either wall are all covered by mirroring (FlipH) rather
-/// than needing separate art for left vs right walls. Does not die. Once
-/// attached, periodically fires a projectile straight out from the
-/// surface it's mounted on.
-///
-/// Orientation logic: the 5 clips are treated as 45-degree steps covering
-/// the angle range [90, 270] (Godot's 2D angle convention: 0=right,
-/// 90=down, 180=left, 270=up). A surface normal that already falls in that
-/// range is used as-is; one outside it is mirrored (angle -> 180 - angle,
-/// plus FlipH) to bring it into range. With that convention: a ceiling
-/// (normal pointing down) lands near 90, a wall normal pointing left lands
-/// near 180, and a floor (normal pointing up) lands near 270 - reassign
-/// AnimLooking* below if your art uses a different convention.
-///
-/// Setup:
-///   - Node type: CharacterBody2D, with a CollisionShape2D.
-///   - Child AnimatedSprite2D with clips "looking 90" / 135 / 180 / 225 /
-///     270 (all looping is fine, or a held single frame - whichever you
-///     drew them as).
-///   - Priority when touching multiple surfaces at once (e.g. a corner) is
-///     floor, then wall, then ceiling.
-///   - Set ProjectileScene to a scene using Projectile.cs to enable firing;
-///     leave it empty for a purely decorative attaching creature.
-/// </summary>
 public partial class Turret : CharacterBody2D
 {
 	[Export] public float Gravity = 900f;
 	[Export] public float MaxFallSpeed = 600f;
 
+	[ExportGroup("Aiming")]
+	[Export] public bool TrackPlayer = true;
+	[Export] public float DetectionRadius = 300f;        // 0 = unlimited
+	[Export(PropertyHint.Range, "0,180")]
+	public float AimArcDegrees = 180f;                  // total arc it can look through, centered on straight-out
+	[Export] public bool SnapShotsToSpriteAngle = true; // fire exactly where the sprite visibly points
+	[Export] public float SpawnOffset { get; set; } = 20.0f;
+
 	[ExportGroup("Firing")]
 	[Export] public PackedScene ProjectileScene;
 	[Export] public float FireInterval = 2f;
-	[Export] public NodePath MuzzlePath = ""; // optional child Node2D marking the spawn offset; defaults to this node's own position
+	[Export] public NodePath MuzzlePath = "";
 
 	[ExportGroup("Node References")]
 	[Export] public NodePath SpritePath = "AnimatedSprite2D";
@@ -48,12 +28,19 @@ public partial class Turret : CharacterBody2D
 	[Export] public string AnimLooking225 = "looking 225";
 	[Export] public string AnimLooking270 = "looking 270";
 
+	// Local "straight out from the surface" direction in the art: LEFT (180 deg).
+	private const float LocalOutAngle = Mathf.Pi;
+
 	private AnimatedSprite2D _sprite;
 	private Node2D _muzzle;
 	private Node2D _player;
+
 	private bool _attached = false;
-	private Vector2 _attachNormal = Vector2.Up; // direction to fire in - away from the mounting surface
+	private Vector2 _attachNormal = Vector2.Left; // world direction away from the mounting surface
+	private Vector2 _aimDirection = Vector2.Left; // world direction the turret is looking / firing
 	private float _fireTimer;
+
+	private string _currentClip = "";
 
 	public override void _Ready()
 	{
@@ -61,6 +48,14 @@ public partial class Turret : CharacterBody2D
 		_muzzle = !MuzzlePath.IsEmpty ? GetNodeOrNull<Node2D>(MuzzlePath) : null;
 		_player = GetTree().GetFirstNodeInGroup("player") as Node2D;
 		_fireTimer = FireInterval;
+
+		if (_sprite != null)
+		{
+			_sprite.FlipH = false;
+			_sprite.FlipV = false;
+		}
+
+		UpdateLookVisual(Vector2.Left);
 	}
 
 	public override void _PhysicsProcess(double delta)
@@ -74,17 +69,27 @@ public partial class Turret : CharacterBody2D
 			Velocity = v;
 
 			MoveAndSlide();
-			TryAttach(); // always settles onto a surface regardless of the player's room
+			TryAttach();
 			return;
 		}
 
-		// Attached: sit completely still from here on.
+		// Attached: never moves again.
 		Velocity = Vector2.Zero;
 
-		// Firing only happens while the player's in the same room - the timer
-		// simply doesn't tick down otherwise, so it doesn't "catch up" with a
-		// surprise shot the instant the player walks back in.
-		if (ProjectileScene != null && RoomActivity.IsPlayerInSameRoom(this, _player))
+		bool playerActive = IsInstanceValid(_player) && RoomActivity.IsPlayerInSameRoom(this, _player);
+
+		// --- Aiming ---
+		Vector2 desiredAim = _attachNormal; // rest pose: straight out from the surface
+		if (TrackPlayer && playerActive)
+		{
+			Vector2 toPlayer = _player.GlobalPosition - GetFireOrigin();
+			if (DetectionRadius <= 0f || toPlayer.Length() <= DetectionRadius)
+				desiredAim = toPlayer;
+		}
+		UpdateLookVisual(desiredAim);
+
+		// --- Firing (only while player is in the room; timer pauses otherwise) ---
+		if (ProjectileScene != null && playerActive)
 		{
 			_fireTimer -= dt;
 			if (_fireTimer <= 0f)
@@ -114,51 +119,87 @@ public partial class Turret : CharacterBody2D
 		}
 		else
 		{
-			return; // still falling, nothing to attach to yet
+			return; // still falling
 		}
 
 		_attached = true;
-		_attachNormal = normal;
-		ApplyOrientation(normal);
+		_attachNormal = normal.Normalized();
+		Velocity = Vector2.Zero;
+
+		// PHYSICAL attachment: rotate so the art's local "out" (LEFT) = surface normal.
+		//   right wall (normal Left)  ->   0 deg
+		//   floor      (normal Up)    ->  90 deg
+		//   left wall  (normal Right) -> 180 deg
+		//   ceiling    (normal Down)  -> 270 deg
+		Rotation = _attachNormal.Angle() - LocalOutAngle;
+
+		UpdateLookVisual(_attachNormal);
 	}
 
-	private void ApplyOrientation(Vector2 normal)
+	/// <summary>
+	/// Converts a desired WORLD aim direction into the turret's local
+	/// (mount-relative) space, clamps it to the allowed arc, picks the
+	/// matching "looking N" clip, and stores the resulting world aim.
+	/// Never flips the sprite.
+	/// </summary>
+	private void UpdateLookVisual(Vector2 worldAim)
 	{
-		float rawDegrees = Mathf.RadToDeg(normal.Angle());
-		rawDegrees = ((rawDegrees % 360f) + 360f) % 360f; // normalize to [0, 360)
+		if (worldAim == Vector2.Zero) worldAim = _attachNormal;
 
-		bool flip = rawDegrees < 90f || rawDegrees > 270f;
-		float effectiveDegrees = flip ? 180f - rawDegrees : rawDegrees;
-		effectiveDegrees = ((effectiveDegrees % 360f) + 360f) % 360f;
+		// World -> local (undo the mount rotation).
+		float localAngle = worldAim.Rotated(-Rotation).Angle();
 
-		// Snap to the nearest 45-degree step among the 5 clips.
-		float snapped = Mathf.Round(effectiveDegrees / 45f) * 45f;
-		snapped = Mathf.Clamp(snapped, 90f, 270f);
+		// Clamp around local "straight out" (180 deg), max +/-90 deg.
+		float halfArc = Mathf.DegToRad(Mathf.Clamp(AimArcDegrees, 0f, 180f) * 0.5f);
+		float offset = Mathf.Wrap(localAngle - LocalOutAngle, -Mathf.Pi, Mathf.Pi);
+		offset = Mathf.Clamp(offset, -halfArc, halfArc);
+		localAngle = LocalOutAngle + offset;
+
+		// Snap to nearest 45-degree clip within [90, 270].
+		float deg = Mathf.PosMod(Mathf.RadToDeg(localAngle), 360f);
+		int snapped = Mathf.Clamp(Mathf.RoundToInt(deg / 45f) * 45, 90, 270);
 
 		string clip = snapped switch
 		{
-			90f => AnimLooking90,
-			135f => AnimLooking135,
-			180f => AnimLooking180,
-			225f => AnimLooking225,
+			90 => AnimLooking90,
+			135 => AnimLooking135,
+			180 => AnimLooking180,
+			225 => AnimLooking225,
 			_ => AnimLooking270,
 		};
 
-		if (_sprite != null)
+		// Store the world aim direction for firing.
+		float fireLocalAngle = SnapShotsToSpriteAngle ? Mathf.DegToRad(snapped) : localAngle;
+		_aimDirection = Vector2.FromAngle(fireLocalAngle + Rotation);
+
+		// Apply visuals only when the clip changes. No flipping, ever.
+		if (_sprite != null && clip != _currentClip)
 		{
-			_sprite.FlipH = flip;
+			_currentClip = clip;
 			if (_sprite.SpriteFrames != null && _sprite.SpriteFrames.HasAnimation(clip))
 				_sprite.Play(clip);
 		}
 	}
 
+	private Vector2 GetFireOrigin()
+	{
+		return _muzzle != null ? _muzzle.GlobalPosition : GlobalPosition;
+	}
+
 	private void Fire()
 	{
 		Node2D projectile = ProjectileScene.Instantiate<Node2D>();
-		GetParent().AddChild(projectile); // sibling, not a child, so it isn't affected by this node's own transform and survives independently
-		projectile.GlobalPosition = _muzzle != null ? _muzzle.GlobalPosition : GlobalPosition;
+		
+		Vector2 normalizedDirection = _aimDirection.Normalized();
 
 		if (projectile is Projectile p)
-			p.Direction = _attachNormal;
+		{
+			p.Direction = normalizedDirection;
+		}
+
+		projectile.GlobalPosition = GetFireOrigin() + (normalizedDirection * SpawnOffset);
+		
+		GetParent().AddChild(projectile);
 	}
+
 }
